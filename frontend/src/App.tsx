@@ -1,122 +1,168 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useCallback } from "react";
+import { ethers } from "ethers";
+import ConnectWallet from "./components/ConnectWallet";
+import AddTask from "./components/AddTask";
+import TaskList from "./components/TaskList";
+import ToDoListArtifact from "./utils/ToDoList.json";
+import { CONTRACT_ADDRESS, HARDHAT_CHAIN_ID } from "./utils/contract";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+declare global {
+  interface Window {
+    ethereum?: ethers.Eip1193Provider & {
+      on?: (event: string, handler: (...args: unknown[]) => void) => void;
+      removeListener?: (
+        event: string,
+        handler: (...args: unknown[]) => void
+      ) => void;
+    };
+  }
 }
 
-export default App
+export interface TxNotification {
+  message: string;
+  type: "pending" | "success" | "error";
+}
+
+function App() {
+  const [account, setAccount] = useState<string | null>(null);
+  const [balance, setBalance] = useState<string | null>(null);
+  const [contract, setContract] = useState<ethers.Contract | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [txNotification, setTxNotification] = useState<TxNotification | null>(
+    null
+  );
+
+  const triggerRefresh = () => setRefreshKey((k) => k + 1);
+
+  /** Show a transaction notification. Success/error auto-dismiss after 3s. */
+  const notify = useCallback((msg: string, type: TxNotification["type"]) => {
+    setTxNotification({ message: msg, type });
+    if (type !== "pending") {
+      setTimeout(() => setTxNotification(null), 3000);
+    }
+  }, []);
+
+  const clearNotification = () => setTxNotification(null);
+
+  const connectWallet = useCallback(async () => {
+    if (!window.ethereum) {
+      throw new Error(
+        "MetaMask is not installed. Please install it to use this dApp."
+      );
+    }
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+
+    // Request accounts
+    const accounts = await provider.send("eth_requestAccounts", []);
+    if (accounts.length === 0) {
+      throw new Error("No accounts found. Please unlock MetaMask.");
+    }
+
+    // Check we are on the Hardhat network
+    const network = await provider.getNetwork();
+    if (Number(network.chainId) !== HARDHAT_CHAIN_ID) {
+      throw new Error(
+        `Please switch MetaMask to the local Hardhat network (chainId ${HARDHAT_CHAIN_ID}). ` +
+          `Currently on chainId ${network.chainId}.`
+      );
+    }
+
+    const signer = await provider.getSigner();
+    const address = await signer.getAddress();
+
+    // Fetch balance (read operation #2)
+    const rawBalance = await provider.getBalance(address);
+    const formatted = ethers.formatEther(rawBalance);
+    const shortBalance = parseFloat(formatted).toFixed(4);
+
+    // Create contract instance with signer for write operations
+    const todoContract = new ethers.Contract(
+      CONTRACT_ADDRESS,
+      ToDoListArtifact.abi,
+      signer
+    );
+
+    setAccount(address);
+    setBalance(shortBalance);
+    setContract(todoContract);
+
+    // Listen for account changes
+    if (window.ethereum.on) {
+      window.ethereum.on("accountsChanged", () => {
+        window.location.reload();
+      });
+      window.ethereum.on("chainChanged", () => {
+        window.location.reload();
+      });
+    }
+  }, []);
+
+  const disconnectWallet = () => {
+    setAccount(null);
+    setBalance(null);
+    setContract(null);
+    setTxNotification(null);
+  };
+
+  return (
+    <div className="app-container">
+      <header className="app-header">
+        <h1>ToDoList dApp</h1>
+        <ConnectWallet
+          account={account}
+          balance={balance}
+          onConnect={connectWallet}
+          onDisconnect={disconnectWallet}
+        />
+      </header>
+
+      {/* Global transaction notification banner */}
+      {txNotification && (
+        <div
+          id="tx-notification"
+          className={`tx-notification tx-${txNotification.type}`}
+        >
+          <span>{txNotification.message}</span>
+          {txNotification.type !== "pending" && (
+            <button
+              className="tx-dismiss"
+              onClick={clearNotification}
+              aria-label="Dismiss"
+            >
+              &times;
+            </button>
+          )}
+        </div>
+      )}
+
+      <main className="app-main">
+        {account && (
+          <AddTask
+            contract={contract}
+            onTaskAdded={triggerRefresh}
+            notify={notify}
+          />
+        )}
+        <TaskList
+          contract={contract}
+          refreshKey={refreshKey}
+          notify={notify}
+        />
+      </main>
+
+      <footer className="app-footer">
+        <p>
+          Contract:{" "}
+          <code title={CONTRACT_ADDRESS}>
+            {CONTRACT_ADDRESS.slice(0, 6)}...{CONTRACT_ADDRESS.slice(-4)}
+          </code>{" "}
+          &middot; Hardhat Local Network
+        </p>
+      </footer>
+    </div>
+  );
+}
+
+export default App;

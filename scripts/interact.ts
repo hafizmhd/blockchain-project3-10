@@ -5,7 +5,7 @@ const { ethers } = await network.create({
 });
 
 
-const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // DON'T FORGET TO USE .env !!!!
 const toDoList = await ethers.getContractAt("ToDoList", contractAddress);
 const [user1, user2] = await ethers.getSigners();
 
