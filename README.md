@@ -147,3 +147,4 @@ Write Success
 
 Error Handling
 <img width="1914" height="852" alt="image" src="https://github.com/user-attachments/assets/16599d52-1aaa-4844-bb21-2d890c594cd4" />
+<img width="1919" height="872" alt="image" src="https://github.com/user-attachments/assets/797e890b-5583-40c7-ada8-59a4256fe8f2" />
