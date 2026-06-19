@@ -132,4 +132,16 @@ Buka [http://localhost:5173](http://localhost:5173), klik **Connect Wallet**, da
 [Link video demo atau GIF]
 
 ## Screenshot
-[Screenshot aplikasi]
+State Sebelum Wallet Terhubung
+<img width="1909" height="913" alt="image" src="https://github.com/user-attachments/assets/937cbf32-52da-42ce-a7a8-13f300ebcf7d" />
+
+Wallet Connected
+<img width="1908" height="923" alt="image" src="https://github.com/user-attachments/assets/9f0bd09a-4510-46c0-a22d-4c3c0370fb11" />
+
+Write Pending
+<img width="1907" height="917" alt="image" src="https://github.com/user-attachments/assets/52dfa02f-3eb2-4dad-8b2d-265e61f804ee" />
+<img width="1908" height="902" alt="image" src="https://github.com/user-attachments/assets/f37a3991-8be5-4a59-b2a0-c4b2c7335b12" />
+
+Write Success
+<img width="1919" height="910" alt="image" src="https://github.com/user-attachments/assets/b8deaa99-022d-45e5-a5e8-91cfe746d5a8" />
+
