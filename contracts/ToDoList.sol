@@ -21,6 +21,15 @@ contract ToDoList {
     event TaskCompleted(address indexed user, uint256 taskId);
     event TaskDeleted(address indexed user, uint256 taskId);
 
+    // Modifier
+    modifier onlyTaskOwner(uint256 _taskId) {
+        require(
+            taskOwner[_taskId] == msg.sender,
+            "Task not found or access denied"
+        );
+        _;
+    }
+
     constructor() {}
 
     function addTask(string calldata _title, uint256 _deadline) external {
@@ -33,5 +42,11 @@ contract ToDoList {
         taskOwner[taskId] = msg.sender;
 
         emit TaskAdded(msg.sender, taskId);
+    }
+
+    function markCompleted(uint256 _taskId) external onlyTaskOwner(_taskId) {
+        require(!tasks[_taskId].isCompleted, "Already completed");
+        tasks[_taskId].isCompleted = true;
+        emit TaskCompleted(msg.sender, _taskId);
     }
 }
