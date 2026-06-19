@@ -98,8 +98,8 @@ async function run() {
   // 7. Negative Case: User 2 tries to modify a task they do not own
   console.log("=== 7. Negative Case: Unauthorized Access ===");
   try {
-    console.log("User 2 attempting to mark task ID 0 (User 1's task) as complete...");
-    await toDoList.connect(user2).markCompleted(0n);
+    console.log(`User 2 attempting to mark task ID ${user1Tasks[0].id} (User 1's task) as complete...`);
+    await toDoList.connect(user2).markCompleted(user1Tasks[0].id);
     console.log("SUCCESS (Unexpected): Task completed by unauthorized user.");
   } catch (error: any) {
     console.log("EXPECTED REVERT/FAILURE: Transaction reverted as expected!");
