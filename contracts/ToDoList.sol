@@ -70,4 +70,18 @@ contract ToDoList {
 
         emit TaskDeleted(msg.sender, _taskId);
     }
+
+    // =============================
+    // View Functions
+    // =============================
+
+    function getTasks() external view returns (Task[] memory) {
+        uint256[] memory ids = userTaskIds[msg.sender];
+        Task[] memory result = new Task[](ids.length);
+
+        for (uint256 i = 0; i < ids.length; i++) {
+            result[i] = tasks[ids[i]];
+        }
+        return result;
+    }
 }
