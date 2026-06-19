@@ -49,4 +49,25 @@ contract ToDoList {
         tasks[_taskId].isCompleted = true;
         emit TaskCompleted(msg.sender, _taskId);
     }
+
+    function deleteTask(uint256 _taskId) external onlyTaskOwner(_taskId) {
+        // 1. Swap-and-pop in the userTaskIds array
+        uint256 indexToRemove = taskIdToIndex[_taskId];
+        uint256 lastIndex = userTaskIds[msg.sender].length - 1;
+
+        if (indexToRemove != lastIndex) {
+            uint256 lastTaskId = userTaskIds[msg.sender][lastIndex];
+            userTaskIds[msg.sender][indexToRemove] = lastTaskId;
+            taskIdToIndex[lastTaskId] = indexToRemove; // update reverse index
+        }
+
+        userTaskIds[msg.sender].pop();
+
+        // 2. Clean up mappings
+        delete tasks[_taskId];
+        delete taskIdToIndex[_taskId];
+        delete taskOwner[_taskId];
+
+        emit TaskDeleted(msg.sender, _taskId);
+    }
 }
