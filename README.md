@@ -145,3 +145,5 @@ Write Pending
 Write Success
 <img width="1919" height="910" alt="image" src="https://github.com/user-attachments/assets/b8deaa99-022d-45e5-a5e8-91cfe746d5a8" />
 
+Error Handling
+<img width="1914" height="852" alt="image" src="https://github.com/user-attachments/assets/16599d52-1aaa-4844-bb21-2d890c594cd4" />
